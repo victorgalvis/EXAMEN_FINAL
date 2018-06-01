@@ -1,1 +1,44 @@
+plsql.execute <<-SQL
+CREATE OR REPLACE PROCEDURE CALCULAR_SIMULACION (tasaefectiva IN DECIMAL, NTotalCuotas IN NUMBER,ValorPrestamo IN NUMBER) AS
 
+Tasa DECIMAL := 0;
+CuotaMensual  DECIMAL := 0;
+ValorPrestamo NUMBER := 0;
+INTERES DECIMAL :=0;
+abono_capital DECIMAL:= 0;
+ABONOINTERES DECIMAL := 0; 
+SALDO DECIMAL := 0;
+
+BEGIN
+ 
+ 
+Tasa := ((1 + (tasaefectiva / 100)) ** (30 / 360) - 1);
+CuotaMensual := ((Tasa * ValorPrestamo)/(1 -(1 + tasa) ** (-NTotalCuotas)));
+INTERES :=(Tasa * ValorPrestamo);
+abono_capital := (CuotaMensual - INTERES);
+ABONOINTERES := (tasa * CuotaMensual );
+SALDO := (ValorPrestamo - abono_capital);
+
+DELETE FROM AMORTIZACION;
+
+INSERT INTO AMORTIZACION (NUMERO_CUOTA,CUOTA_MENSUAL,ABONO_CAPITAL,ABONO_INTERES,SALDO)
+VALUES (NTotalCuotas, CuotaMensual,abono_capital,ABONOINTERES, SALDO );
+END
+
+SQL
+
+
+
+
+
+
+plsql.execute <<-SQL
+
+CREATE OR REPLACE VIEW PLAN_AMORTIZACION
+AS
+ SELECT total_interes
+ FROM AMORTIZACION
+ WHERE total_interes = SUM (ABONO_INTERES)
+ ORDER BY  CUOTA_MENSUAL ASC
+
+SQL
